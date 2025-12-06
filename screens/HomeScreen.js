@@ -80,7 +80,7 @@ const HomeScreen = () => {
   }, [])
 
   let expTxt;
-  { apiData ? expTxt = apiData.explanation : expTxt = "Loading..." }
+  { apiData ? expTxt = apiData?.explanation : expTxt = "Loading..." }
 
   function apiDate() {
     if (!apiData || !apiData.date) return "Loading date...";
@@ -266,7 +266,7 @@ const HomeScreen = () => {
               </>
               ) : (
                 <>{
-                  expTxt.length > 220 ? (
+                  expTxt?.length > 220 ? (
                     <><Text style={styles.explanation}>
                       {expTxt.substring(0, 220)}...
                     </Text><Pressable onPress={() => { setReadMorePressed(true); }}>

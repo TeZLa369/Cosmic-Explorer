@@ -1,15 +1,11 @@
-import "dotenv/config";
-
 export default {
     expo: {
         name: "Cosmic Explorer",
         slug: "nasa-api",
         owner: "tezla",
         icon: "./assets/nasa.png",
-        plugins: ["expo-audio",
-            "expo-font",
-            "expo-asset"
-        ],
+
+        plugins: ["expo-audio", "expo-font", "expo-asset"],
 
         extra: {
             nasaApiKey: process.env.NASA_API_KEY,
@@ -18,16 +14,14 @@ export default {
             },
         },
 
-        splash: {
-            image: "./assets/nasa.png",
-            resizeMode: "contain",
-            backgroundColor: "#000000",
-
-        },
-
         android: {
             package: "com.kuntal.cosmicexplorer",
             versionCode: 1,
+            permissions: [
+                "READ_MEDIA_IMAGES",
+                "WRITE_EXTERNAL_STORAGE",
+                "READ_EXTERNAL_STORAGE"
+            ]
         },
     },
 };

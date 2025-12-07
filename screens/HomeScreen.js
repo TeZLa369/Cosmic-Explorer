@@ -11,7 +11,7 @@ import {
   ImageBackground
 } from 'react-native';
 import Constants from "expo-constants";
-const NASA_KEY = Constants.expoConfig.extra.nasaApiKey;
+const NASA_KEY = Constants.expoConfig.extra?.nasaApiKey;
 import { useState, useRef, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -31,6 +31,7 @@ const HomeScreen = () => {
   const [fav, setfav] = useState(false);
   const [apiData, setApiData] = useState(null);
   const [isBgmPlaying, setIsBgmPlaying] = useState(true);
+  const [firstTime, setfirstTime] = useState(true);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateAnim = useRef(new Animated.Value(6)).current;
@@ -68,16 +69,31 @@ const HomeScreen = () => {
         setfav(true)
         // console.log("true")
       }
-
+      setfirstTime(false);
     } catch (error) {
       console.log("Unable to fetch data: ", error)
     }
   }
 
+  // useEffect(() => {
+  //   if (firstTime) {
+  //     setTimeout(() => {
+  //       fetchData(formattedDate);
+  //     }, 2000);
+  //   }
+  //   else {
+  //     selectedDate ? fetchData(selectedDate) :
+  //       fetchData(formattedDate);
+  //   }
+  // }, [])
+
+
   useEffect(() => {
     selectedDate ? fetchData(selectedDate) :
       fetchData(formattedDate);
   }, [])
+
+
 
   let expTxt;
   { apiData ? expTxt = apiData?.explanation : expTxt = "Loading..." }

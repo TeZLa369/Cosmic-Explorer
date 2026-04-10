@@ -26,7 +26,7 @@ This project focuses on clean UI, real-time API integration, and a smooth, user-
 <img src="screenshots/NearObjects.jpg" width="300" height="800" />
 
 ### Favorites Screen
-<img src="screenshots/favSection.jpg" width="300" height="600" />
+<img src="screenshots/FavsNew.jpg" width="300" height="800" />
 
 
 

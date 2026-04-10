@@ -20,13 +20,23 @@ This project focuses on clean UI, real-time API integration, and a smooth, user-
 
 
 ### Astronomy Picture of the Day (APOD)
-<img src="screenshots/APODnew.jpg" width="300" height="800" />
+<img src="screenshots/APODnew.jpg" width="300" height="850" />
+
+### Explore Page
+<img src="screenshots/Explore.jpg" width="300" height="850" />
+
+### Earth Images
+<img src="screenshots/Epic.jpg" width="300" height="850" />
 
 ### Asteroid Tracker
-<img src="screenshots/NearObjects.jpg" width="300" height="800" />
+<img src="screenshots/NearObjects.jpg" width="300" height="850" />
+
+### Solar Activity 
+<img src="screenshots/SolarActivity.jpg" width="300" height="850" />
+
 
 ### Favorites Screen
-<img src="screenshots/FavsNew.jpg" width="300" height="800" />
+<img src="screenshots/FavsNew.jpg" width="300" height="850" />
 
 
 

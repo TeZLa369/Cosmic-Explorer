@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { audioBgm, unloadBgm } from "./components/audioBgm";
 import { Audio } from "expo-av";
 import * as MediaLibrary from "expo-media-library";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 
 
@@ -13,7 +14,7 @@ import * as MediaLibrary from "expo-media-library";
 export default function App() {
 
   async function requestPermission() {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
+    const { status } = await MediaLibrary.requestPermissionsAsync(true, ["photo"]);
     if (status !== "granted") {
       alert("Permission denied!");
     }
@@ -39,12 +40,13 @@ export default function App() {
   }, []);
 
   return (
-    <NavigationContainer >
-      <StatusBar style="light" />
-      <TabNavigator />
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <StatusBar style="light" />
+        <TabNavigator />
+      </NavigationContainer>
+    </GestureHandlerRootView>
   )
 }
-
 
 

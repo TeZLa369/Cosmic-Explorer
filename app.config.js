@@ -2,15 +2,13 @@ export default {
     expo: {
         name: "Cosmic Explorer",
         slug: "nasa-api",
-        owner: "tezla",
         icon: "./assets/nasa.png",
 
         plugins: ["expo-audio", "expo-font", "expo-asset"],
 
         extra: {
-            nasaApiKey: process.env.NASA_API_KEY,
             eas: {
-                projectId: "7d0359bd-0e21-4a96-9640-fcffc88727fd",
+                projectId: "525c1a6f-a139-4269-b11f-c7438e9b2581",
             },
         },
 

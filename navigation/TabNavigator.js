@@ -1,22 +1,17 @@
-import { Dimensions, Easing, Image, ImageBackground, Text, View } from 'react-native';
+import { Easing } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-import Asteroid from '../screens/Asteroid';
 import Mars_rover from '../screens/Mars_rover';
-import Favs from '../screens/Favs';
 import HomeScreen from '../screens/HomeScreen';
-import { useState } from 'react';
-import TabIcon from "../components/TabIcon";
+import ExploreNav from './ExploreNav';
 import ScreenNav from './ScreenNav';
+import { Ionicons } from '@expo/vector-icons';
 
 
 
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
-    const [gifOFF, setgifOFF] = useState(true);
-
-    let [iconSource, seticonSource] = useState("");
 
     return (
         <Tab.Navigator
@@ -25,26 +20,43 @@ const TabNavigator = () => {
             screenOptions={({ route }) => ({
 
                 tabBarIcon: ({ focused, size }) => {
-                    let iconSource;
-
                     if (route.name === "APOD") {
-                        iconSource = require("../assets/APOD.png");
-                    } else if (route.name === "Asteroid") {
-                        iconSource = require("../assets/asteroid.png");
+                        return (
+                            <Ionicons
+                                name="image-outline"
+                                size={24}
+                                color={focused ? "white" : "gray"}
+                                style={{ marginBottom: 6 }}
+                            />
+                        );
+                    } else if (route.name === "Explore") {
+                        return (
+                            <Ionicons
+                                name="compass-outline"
+                                size={24}
+                                color={focused ? "white" : "gray"}
+                                style={{ marginBottom: 6 }}
+                            />
+                        );
                     } else if (route.name === "Rover") {
-                        iconSource = require("../assets/rover.png");
+                        return (
+                            <Ionicons
+                                name="planet-outline"
+                                size={24}
+                                color={focused ? "white" : "gray"}
+                                style={{ marginBottom: 6 }}
+                            />
+                        );
                     } else if (route.name === "Favorites") {
-                        iconSource = require("../assets/heart.png");
+                        return (
+                            <Ionicons
+                                name="heart-outline"
+                                size={24}
+                                color={focused ? "white" : "gray"}
+                                style={{ marginBottom: 6 }}
+                            />
+                        );
                     }
-                    return (<Image
-                        source={iconSource}
-                        style={{
-                            width: 45,
-                            height: 45,
-                            resizeMode: "contain",
-                            marginBottom: 12
-                        }}
-                    />);
                 },
                 tabBarShowLabel: true,
                 headerShown: true,
@@ -53,10 +65,13 @@ const TabNavigator = () => {
                 tabBarStyle: {
                     backgroundColor: "#000000",
                     borderTopColor: "#222",
-                    paddingTop: "5%",
-                    height: 90,
+                    paddingTop: 8,
+                    height: 78,
                     alignContent: "center",
                     alignItems: "center",
+                },
+                tabBarLabelStyle: {
+                    fontSize: 11,
                 },
                 animation: "fade",
                 transitionSpec: {
@@ -73,15 +88,8 @@ const TabNavigator = () => {
             <Tab.Screen options={{
                 headerShown: false
             }} name="APOD" component={HomeScreen} />
-            {/* <Tab.Screen options={{
-                headerTitle: () => (<Image source={require("../assets/nasa.png")} height={100} width={100} style={{ height: 50, width: 60, }} />)
-            }} name="APOD" component={HomeScreen} /> */}
-            <Tab.Screen options={{ headerTitle: () => (<Image source={require("../assets/nasa.png")} height={100} width={100} style={{ height: 50, width: 60, }} />) }} name="Asteroid" component={Asteroid} />
+            <Tab.Screen options={{ headerShown: false }} name="Explore" component={ExploreNav} />
             <Tab.Screen options={{ headerShown: false }} name="Rover" component={Mars_rover} />
-
-            {/* <Tab.Screen options={{
-                headerTitle: () => (<Image source={require("../assets/nasa.png")} height={100} width={100} style={{ height: 50, width: 60, }} />)
-            }} name="Rover" component={Mars_rover} /> */}
             <Tab.Screen name="Favorites" component={ScreenNav} options={{ headerShown: false }} />
 
 

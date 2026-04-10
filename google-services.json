@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "923440239606",
+    "project_id": "cosmicexplorer-4502b",
+    "storage_bucket": "cosmicexplorer-4502b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:923440239606:android:92cdee29e8b6c38f282dd7",
+        "android_client_info": {
+          "package_name": "com.kuntal.cosmicexplorer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbYPmcBLukoL7V9D9zUXHkFywjXPgfQzw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

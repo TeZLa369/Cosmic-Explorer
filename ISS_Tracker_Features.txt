@@ -1,0 +1,121 @@
+================================================================================
+ISS LIVE TRACKER & OVERHEAD PASS PREDICTOR - ARCHITECTURE & IMPLEMENTATION DOCUMENT
+================================================================================
+File Location: screens/ISSTracker.js
+Project Root:  c:\Users\kunta\Documents\RN\NASA-API
+
+OVERVIEW:
+ISSTracker.js is a full-featured, real-time International Space Station (ISS)
+telemetry tracker and overhead pass prediction screen built using React Native,
+Expo, Leaflet.js, Open-Meteo, and WhereTheISS.at APIs.
+
+--------------------------------------------------------------------------------
+1. UI, LAYOUT & VISUAL DESIGN
+--------------------------------------------------------------------------------
+- Translucent Status Bar: Uses <StatusBar style="light" translucent backgroundColor="transparent" />
+  combined with useSafeAreaInsets() for an edge-to-edge layout across Android & iOS.
+- Aesthetics: Dark space glassmorphism theme using expo-linear-gradient with custom colors:
+  Primary Background: #030712 -> #081021 -> #040814
+  Accent Neon Glow: #00E5FF, Card Background: rgba(10, 18, 32, 0.88), Border: rgba(255,255,255,0.15)
+- Top Navigation Header: Includes back button (Ionicons arrow-back), eyebrow section title,
+  and a pulsing "LIVE" telemetry indicator.
+- Radar Pulse Hero View: Animated radar ring pulse effect using React Native Animated API.
+  Displays live geocoded region name (e.g. "Over North Atlantic Ocean") and solar visibility badge (DAYLIGHT / NIGHT).
+
+--------------------------------------------------------------------------------
+2. LIVE INTERACTIVE LEAFLET WORLD MAP
+--------------------------------------------------------------------------------
+- Built inside react-native-webview (<WebView>) running an embedded HTML/JS template (MAP_HTML).
+- Map Layers Supported (Leaflet Control):
+  * OpenStreetMap (Bold Labels)
+  * CartoDB Voyager (Vibrant Colors + Labels)
+  * Esri World Imagery (Satellite + Place Names)
+  * CartoDB Dark Mode + Labels
+- Live Position Updating: Map marker updates in real time without refreshing the WebView
+  by injecting JavaScript via webViewRef.current.injectJavaScript("updatePos(lat, lon); true;").
+- Fullscreen Map Modal: Allows expanding the live tracking map to full screen with coordinates header.
+
+--------------------------------------------------------------------------------
+3. REAL-TIME ORBITAL TELEMETRY METRICS
+--------------------------------------------------------------------------------
+- Automatically polls https://api.wheretheiss.at/v1/satellites/25544 every 4 seconds.
+- Displays:
+  * Speed: Orbital velocity in km/h and mph (~27,600 km/h).
+  * Altitude: Distance above Earth surface (~420 km).
+  * Latitude: Degrees with North/South hemisphere indicator.
+  * Longitude: Degrees with East/West hemisphere indicator.
+
+--------------------------------------------------------------------------------
+4. OVERHEAD FLYOVER PASS PREDICTOR
+--------------------------------------------------------------------------------
+- Distance Calculation: Haversine distance formula (calculateDistanceKm) computes exact ground distance
+  in kilometers between live ISS telemetry position and selected target user location.
+- Proximity Status Badges:
+  * OVERHEAD NOW 🚀 (Distance <= 1800 km)
+  * APPROACHING TARGET 🛰️ (Distance 1801 km - 3500 km)
+  * ORBITING GLOBE 🌌 (Distance > 3500 km)
+- Pass Prediction Engine: Fetches pass predictions from WhereTheISS.at pass API. Includes a realistic
+  fallback orbital generator (92.68 min period) if pass API is rate-limited.
+- Next Pass Hero Specifications:
+  * Pass start time clock & live countdown timer (formatTimeUntil).
+  * Max elevation angle (e.g. 68° High).
+  * Flyover duration (e.g. 5m 30s).
+  * Flight trajectory direction (e.g. NW 🧭 ➔ SE).
+- Pass Reminder Alert: Toggle button to set 10-minute pass reminders.
+- Flyover Forecast List: Shows upcoming flyover passes.
+
+--------------------------------------------------------------------------------
+5. ON-DEVICE HARDWARE GPS LOCATION SYSTEM (3-TIER ARCHITECTURE)
+--------------------------------------------------------------------------------
+- Native Android System Permissions:
+  Uses PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION)
+  to prompt the native Android OS location permission dialog.
+- Tier 1 (expo-location Module):
+  Dynamically checks for require('expo-location') for high-accuracy GPS coordinates
+  (Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })).
+- Tier 2 (Native WebView Geolocation Bridge):
+  Uses <WebView geolocationEnabled={true}> and HTML5 navigator.geolocation inside WebView.
+  Injects requestNativeGps() script which triggers OS hardware GPS location delegates and returns
+  latitude, longitude, and accuracy tolerance via window.ReactNativeWebView.postMessage.
+- Tier 3 (Network IP Geolocation Fallback):
+  Uses https://ipapi.co/json/ as a fallback if GPS hardware permissions are denied.
+- Displays GPS Accuracy: e.g. "📍 Device GPS (US) (±12m)".
+
+--------------------------------------------------------------------------------
+6. DEDICATED LOCATION SELECTOR BAR & CITY TYPING SEARCH
+--------------------------------------------------------------------------------
+- Target Location Selector Bar:
+  Full-width card displaying active target location name, latitude/longitude coordinates,
+  quick-action GPS compass button, and "Select City" button.
+- Global City Geocoding API:
+  Powered by Open-Meteo Geocoding API (https://geocoding-api.open-meteo.com/v1/search?name=...).
+- City Typing Search Input:
+  Debounced (350ms) TextInput allows searching over 100,000 global cities by typing.
+  Includes single-tap clear button (close-circle).
+- Saved Cities List:
+  Selecting any searched city automatically sets it for pass predictions and saves it into the preset city list.
+
+--------------------------------------------------------------------------------
+7. CREW IN SPACE ONBOARD SECTION & ASTRONAUT BIOS
+--------------------------------------------------------------------------------
+- Live Crew Count: Fetches current astronauts in space from http://api.open-notify.org/astros.json.
+- Rich Biography Database (ASTRONAUT_BIOS):
+  Detailed bios for Expedition 71, SpaceX Crew-8, Boeing Starliner (Sunita Williams, Butch Wilmore),
+  and Tiangong Shenzhou taikonauts.
+- Interactive Bio Profile Modal:
+  Modal displays astronaut agency badge (NASA, Roscosmos, CMSA), launch vehicle, cumulative space time,
+  role/position, mission summary, and a direct Wikipedia biography link.
+
+--------------------------------------------------------------------------------
+SUMMARY OF DEPENDENCIES USED IN ISSTRACKER.JS:
+--------------------------------------------------------------------------------
+- react-native (View, Text, ScrollView, Pressable, Animated, Modal, TextInput, PermissionsAndroid, Platform)
+- react-native-safe-area-context (useSafeAreaInsets)
+- expo-status-bar (StatusBar)
+- expo-linear-gradient (LinearGradient)
+- @expo/vector-icons (Ionicons)
+- react-native-webview (WebView)
+- Open-Meteo Geocoding API (https://geocoding-api.open-meteo.com)
+- WhereTheISS.at Satellite Telemetry API (https://api.wheretheiss.at)
+- Open Notify Astronaut API (http://api.open-notify.org)
+================================================================================

@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,7 +30,7 @@ const COLORS = {
 
 const formatNumber = (value) => Number(value || 0).toLocaleString();
 
-const AsteroidsFav = () => {
+const AsteroidsFav = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [savedData, setSavedData] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,9 +89,21 @@ const AsteroidsFav = () => {
     };
   }, [savedData]);
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView edges={["left", "right"]} style={styles.container}>
-      <LinearGradient colors={["#04070C", "#0A1323", "#050913"]} style={styles.gradientBg}>
+    <View style={styles.container}>
+      <LinearGradient colors={["#04070C", "#0A1323", "#050913"]} style={[styles.gradientBg, { paddingTop: insets.top }]}>
+        {/* Header */}
+        <View style={styles.topHeader}>
+          <Pressable style={styles.backButton} onPress={() => navigation?.goBack()}>
+            <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+          </Pressable>
+          <View style={styles.titleWrap}>
+            <Text style={styles.headerEyebrow}>SAVED WATCHLIST</Text>
+            <Text style={styles.headerTitle}>Asteroid Favorites</Text>
+          </View>
+        </View>
         <FlatList
           data={savedData}
           keyExtractor={(item) => item.id}
@@ -110,7 +122,7 @@ const AsteroidsFav = () => {
                 <Text style={styles.heroEyebrow}>SAVED WATCHLIST</Text>
                 <Text style={styles.mainTxt}>Asteroid Favorites</Text>
                 <Text style={styles.subTxt}>
-                  Revisit the near-earth objects you marked to keep an eye on.
+                  Revisit the near-Earth objects you marked to keep an eye on.
                 </Text>
 
                 <View style={styles.summaryRow}>
@@ -186,7 +198,7 @@ const AsteroidsFav = () => {
           )}
         />
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -199,6 +211,40 @@ const styles = StyleSheet.create({
   },
   gradientBg: {
     flex: 1,
+  },
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  titleWrap: {
+    flex: 1,
+  },
+  headerEyebrow: {
+    color: COLORS.accent,
+    fontSize: 10,
+    letterSpacing: 2,
+    fontWeight: "700",
+  },
+  headerTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 20,
+    fontWeight: "700",
   },
   listContent: {
     paddingHorizontal: 16,

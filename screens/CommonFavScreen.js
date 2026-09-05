@@ -13,7 +13,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from 'expo-sharing';
@@ -186,7 +186,7 @@ const APODFavoriteCard = ({ item, onRemove, onSave, onShare, onPreview, index, t
   );
 };
 
-const CommonFavScreen = ({ route }) => {
+const CommonFavScreen = ({ route, navigation }) => {
   const { pageName } = route.params;
   const [roverData, setRoverData] = useState([]);
   const [apodData, setApodData] = useState([]);
@@ -258,16 +258,18 @@ const CommonFavScreen = ({ route }) => {
     const keys = await getAllKeys();
     const dateKeys = keys.filter((key) => /^\d{4}-\d{2}-\d{2}$/.test(key));
 
-    if (!nasaApiKey || dateKeys.length === 0) {
+    if (dateKeys.length === 0) {
       setApodData([]);
       return;
     }
+
+    const apiKey = nasaApiKey || "DEMO_KEY";
 
     try {
       const responses = await Promise.all(
         dateKeys.map(async (dateKey) => {
           try {
-            const res = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${nasaApiKey}&date=${dateKey}`);
+            const res = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${apiKey}&date=${dateKey}`);
             const data = await res.json();
             return !res.ok || data?.code ? null : data;
           } catch {
@@ -378,60 +380,59 @@ const CommonFavScreen = ({ route }) => {
       : (activeData[0].media_type === "image" ? { uri: activeData[0].url } : require("../assets/noPng3.png")))
     : require("../assets/black.png");
 
+  const insets = useSafeAreaInsets();
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <LinearGradient colors={["#04070C", "#0A1323", "#050913"]} style={styles.centerView}>
+      <View style={styles.container}>
+        <LinearGradient colors={["#04070C", "#0A1323", "#050913"]} style={[styles.centerView, { paddingTop: insets.top }]}>
+          <View style={styles.topHeaderLoading}>
+            <Pressable style={styles.backButton} onPress={() => navigation?.goBack()}>
+              <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+            </Pressable>
+          </View>
           <ActivityIndicator size="large" color={COLORS.accent} />
           <Text style={styles.centerTitle}>Loading favorites</Text>
           <Text style={styles.centerSubtitle}>Bringing your saved collection into view.</Text>
         </LinearGradient>
-      </SafeAreaView>
-    );
-  }
-
-  if (pageName !== "ROVER" && !nasaApiKey) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <LinearGradient colors={["#04070C", "#0A1323", "#050913"]} style={styles.centerView}>
-          <Ionicons name="key-outline" size={52} color={COLORS.accent} />
-          <Text style={styles.centerTitle}>NASA API key needed</Text>
-          <Text style={styles.centerSubtitle}>
-            Add your NASA API key to load the saved APOD details on this device.
-          </Text>
-          <Pressable style={styles.keyActionButton} onPress={() => setApiKeyModalVisible(true)}>
-            <Text style={styles.keyActionButtonText}>{apodData.length ? "Edit API Key" : "Add API Key"}</Text>
-          </Pressable>
-        </LinearGradient>
-        <NasaApiKeyModal
-          visible={apiKeyModalVisible}
-          currentValue={nasaApiKey}
-          onClose={() => setApiKeyModalVisible(false)}
-          onSave={handleSaveApiKey}
-        />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (activeData.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <LinearGradient colors={["#04070C", "#0A1323", "#050913"]} style={styles.centerView}>
+      <View style={styles.container}>
+        <LinearGradient colors={["#04070C", "#0A1323", "#050913"]} style={[styles.centerView, { paddingTop: insets.top }]}>
+          <View style={styles.topHeaderLoading}>
+            <Pressable style={styles.backButton} onPress={() => navigation?.goBack()}>
+              <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+            </Pressable>
+          </View>
           <Ionicons name="heart-dislike-outline" size={52} color={COLORS.accent} />
           <Text style={styles.centerTitle}>No favorites found</Text>
           <Text style={styles.centerSubtitle}>Go back and add some to this collection.</Text>
         </LinearGradient>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
+    <View style={styles.container}>
       <ImageBackground source={bgImg} blurRadius={36} style={styles.imgBackground}>
         <LinearGradient
           colors={["rgba(6,10,20,0.64)", "rgba(7,12,23,0.9)", "rgba(5,8,14,0.98)"]}
-          style={[styles.overlay, StyleSheet.absoluteFillObject]}
+          style={[styles.overlay, StyleSheet.absoluteFillObject, { paddingTop: insets.top }]}
         >
+          {/* Header */}
+          <View style={styles.topHeader}>
+            <Pressable style={styles.backButton} onPress={() => navigation?.goBack()}>
+              <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+            </Pressable>
+            <View style={styles.titleWrap}>
+              <Text style={styles.headerEyebrow}>SAVED COLLECTION</Text>
+              <Text style={styles.headerTitle}>{pageName === "ROVER" ? "Rover Favorites" : "APOD Favorites"}</Text>
+            </View>
+          </View>
           {pageName === "ROVER" ? (
             <FlatList
               data={activeData}
@@ -505,7 +506,7 @@ const CommonFavScreen = ({ route }) => {
         onClose={() => setApiKeyModalVisible(false)}
         onSave={handleSaveApiKey}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -513,6 +514,46 @@ export default CommonFavScreen;
 
 const styles = StyleSheet.create({
   container: { backgroundColor: "#000", flex: 1 },
+  topHeaderLoading: {
+    position: "absolute",
+    top: 14,
+    left: 16,
+    zIndex: 10,
+  },
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  titleWrap: {
+    flex: 1,
+  },
+  headerEyebrow: {
+    color: COLORS.accent,
+    fontSize: 10,
+    letterSpacing: 2,
+    fontWeight: "700",
+  },
+  headerTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 20,
+    fontWeight: "700",
+  },
   centerView: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 },
   centerTitle: { marginTop: 16, color: COLORS.textPrimary, fontSize: 26, fontWeight: "700" },
   centerSubtitle: { marginTop: 8, color: COLORS.textMuted, fontSize: 14, textAlign: "center", lineHeight: 21 },

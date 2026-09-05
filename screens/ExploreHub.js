@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import RevealView from '../components/RevealView';
@@ -19,6 +19,14 @@ const COLORS = {
 
 const EXPLORE_ITEMS = [
   {
+    id: "ISSTracker",
+    title: "ISS Live Tracker",
+    subtitle: "Real-time orbital telemetry, astronaut crew roster, and interactive astronaut bios.",
+    icon: "navigate-outline",
+    colors: ["rgba(0,229,255,0.28)", "rgba(10,30,60,0.12)"],
+    route: "ISSTracker",
+  },
+  {
     id: "EPIC",
     title: "Earth Live",
     subtitle: "Browse NASA EPIC full-disk Earth imagery from DSCOVR.",
@@ -35,6 +43,14 @@ const EXPLORE_ITEMS = [
     route: "DONKI",
   },
   {
+    id: "EONET",
+    title: "Earth Events",
+    subtitle: "Follow active natural events including fires, storms, floods, and volcanoes.",
+    icon: "leaf-outline",
+    colors: ["rgba(87,217,152,0.18)", "rgba(255,255,255,0.06)"],
+    route: "EONET",
+  },
+  {
     id: "Asteroid",
     title: "Asteroid Watch",
     subtitle: "Scan near-Earth objects, distances, and hazard flags.",
@@ -42,14 +58,24 @@ const EXPLORE_ITEMS = [
     colors: ["rgba(164,146,255,0.18)", "rgba(255,255,255,0.06)"],
     route: "Asteroid",
   },
+  {
+    id: "Rover",
+    title: "Mars Rover",
+    subtitle: "Browse imagery captured by NASA's Mars exploration rovers.",
+    icon: "planet-outline",
+    colors: ["rgba(229,143,96,0.2)", "rgba(255,255,255,0.06)"],
+    route: "Rover",
+  },
 ];
 
 const ExploreHub = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView edges={["left", "right"]} style={styles.container}>
+    <View style={styles.container}>
       <LinearGradient
         colors={["#04070C", "#0A1323", "#050913"]}
-        style={styles.gradient}
+        style={[styles.gradient, { paddingTop: insets.top }]}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <RevealView delay={40}>
@@ -61,7 +87,7 @@ const ExploreHub = ({ navigation }) => {
 
               <Text style={styles.heroTitle}>Choose a space data feed.</Text>
               <Text style={styles.heroSubtitle}>
-                Earth imagery, space weather, and asteroid tracking now live in one cleaner section.
+                Earth imagery, natural events, space weather, and planetary exploration in one growing collection.
               </Text>
             </View>
           </RevealView>
@@ -90,7 +116,7 @@ const ExploreHub = ({ navigation }) => {
           ))}
         </ScrollView>
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 };
 

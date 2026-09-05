@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Dimensions, Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,7 +46,7 @@ const CARD_DATA = [
   {
     key: "ASTEROID",
     title: "Asteroid",
-    subtitle: "Your saved near-earth watchlist",
+    subtitle: "Your saved near-Earth watchlist",
     route: "AsteroidFav",
     image: require("../assets/asteroidfav.jpg"),
     icon: "radio-outline",
@@ -131,8 +131,10 @@ const Favs = ({ navigation }) => {
     fetchHeaderImage(normalized);
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView edges={["left", "right"]} style={styles.container}>
+    <View style={styles.container}>
       <ImageBackground
         source={apiData?.url ? { uri: apiData.url } : require("../assets/black.png")}
         resizeMode='cover'
@@ -141,7 +143,7 @@ const Favs = ({ navigation }) => {
       >
         <LinearGradient
           colors={["rgba(5,8,14,0.62)", "rgba(7,12,23,0.9)", "rgba(5,8,14,0.98)"]}
-          style={[styles.headerSubContainer, StyleSheet.absoluteFillObject]}
+          style={[styles.headerSubContainer, StyleSheet.absoluteFillObject, { paddingTop: insets.top }]}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -220,7 +222,7 @@ const Favs = ({ navigation }) => {
         onClose={() => setApiKeyModalVisible(false)}
         onSave={handleSaveApiKey}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

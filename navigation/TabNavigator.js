@@ -1,7 +1,6 @@
 import { Easing } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-import Mars_rover from '../screens/Mars_rover';
 import HomeScreen from '../screens/HomeScreen';
 import ExploreNav from './ExploreNav';
 import ScreenNav from './ScreenNav';
@@ -33,15 +32,6 @@ const TabNavigator = () => {
                         return (
                             <Ionicons
                                 name="compass-outline"
-                                size={24}
-                                color={focused ? "white" : "gray"}
-                                style={{ marginBottom: 6 }}
-                            />
-                        );
-                    } else if (route.name === "Rover") {
-                        return (
-                            <Ionicons
-                                name="planet-outline"
                                 size={24}
                                 color={focused ? "white" : "gray"}
                                 style={{ marginBottom: 6 }}
@@ -89,7 +79,6 @@ const TabNavigator = () => {
                 headerShown: false
             }} name="APOD" component={HomeScreen} />
             <Tab.Screen options={{ headerShown: false }} name="Explore" component={ExploreNav} />
-            <Tab.Screen options={{ headerShown: false }} name="Rover" component={Mars_rover} />
             <Tab.Screen name="Favorites" component={ScreenNav} options={{ headerShown: false }} />
 
 

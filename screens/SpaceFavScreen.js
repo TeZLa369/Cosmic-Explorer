@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -165,7 +165,7 @@ const DONKICard = ({ item, index, onRemove }) => (
   </RevealView>
 );
 
-const SpaceFavScreen = ({ route }) => {
+const SpaceFavScreen = ({ route, navigation }) => {
   const { pageName } = route.params;
   const [savedItems, setSavedItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -280,13 +280,25 @@ const SpaceFavScreen = ({ route }) => {
     setPreviewVisible(true);
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView edges={["left", "right"]} style={styles.container}>
+    <View style={styles.container}>
       <ImageBackground source={backgroundImage} blurRadius={pageName === "EPIC" ? 26 : 0} style={styles.background}>
         <LinearGradient
           colors={["rgba(5,8,14,0.64)", "rgba(7,12,23,0.9)", "rgba(5,8,14,0.98)"]}
-          style={[styles.overlay, StyleSheet.absoluteFillObject]}
+          style={[styles.overlay, StyleSheet.absoluteFillObject, { paddingTop: insets.top }]}
         >
+          {/* Header */}
+          <View style={styles.topHeader}>
+            <Pressable style={styles.backButton} onPress={() => navigation?.goBack()}>
+              <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+            </Pressable>
+            <View style={styles.titleWrap}>
+              <Text style={styles.headerEyebrow}>SAVED COLLECTION</Text>
+              <Text style={styles.headerTitle}>{stats.title}</Text>
+            </View>
+          </View>
           <FlatList
             data={savedItems}
             keyExtractor={(item) => item.key || item.storageKey}
@@ -355,7 +367,7 @@ const SpaceFavScreen = ({ route }) => {
         onDownload={() => saveImage(previewData.uri)}
         onShare={() => shareImage(previewData.uri)}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -371,6 +383,40 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
+  },
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  titleWrap: {
+    flex: 1,
+  },
+  headerEyebrow: {
+    color: COLORS.accent,
+    fontSize: 10,
+    letterSpacing: 2,
+    fontWeight: "700",
+  },
+  headerTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 20,
+    fontWeight: "700",
   },
   listContent: {
     paddingHorizontal: 16,

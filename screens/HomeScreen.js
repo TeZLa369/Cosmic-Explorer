@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import FullSkeleton from '../components/FullSkeleton';
@@ -21,6 +21,7 @@ import { audioBgm, pauseBgm } from "../components/audioBgm";
 import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from 'expo-sharing';
+import { WebView } from 'react-native-webview';
 import ZoomableImageModal from '../components/ZoomableImageModal';
 import NasaApiKeyModal from '../components/NasaApiKeyModal';
 import { loadNasaApiKey, saveNasaApiKey } from '../components/nasaApiKeyStorage';
@@ -37,6 +38,8 @@ const COLORS = {
   blue: "#8FC7FF",
   shadow: "rgba(0,0,0,0.35)",
 };
+
+
 
 const formatLongDate = (dateValue) => {
   if (!dateValue) return "Loading date...";
@@ -69,6 +72,37 @@ const HomeScreen = () => {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateAnim = useRef(new Animated.Value(10)).current;
+
+  const minDateKey = "1995-06-16";
+  const minDate = new Date(1995, 5, 16);
+  const isToday = selectedDate === todayKey;
+  const isMinDate = selectedDate === minDateKey;
+
+  const changeDateByDays = (days) => {
+    const parts = selectedDate.split("-");
+    const current = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    current.setDate(current.getDate() + days);
+
+    if (current < minDate) {
+      current.setTime(minDate.getTime());
+    }
+    if (current > today) {
+      current.setTime(today.getTime());
+    }
+
+    const year = current.getFullYear();
+    const month = String(current.getMonth() + 1).padStart(2, '0');
+    const day = String(current.getDate()).padStart(2, '0');
+    const newKey = `${year}-${month}-${day}`;
+
+    if (newKey !== selectedDate) {
+      setPickerDate(current);
+      setSelectedDate(newKey);
+    }
+  };
+
+  const goToPrevDay = () => changeDateByDays(-1);
+  const goToNextDay = () => changeDateByDays(1);
 
   function startFade() {
     setImageLoaded(true);
@@ -126,14 +160,10 @@ const HomeScreen = () => {
     setFav(false);
     resetImageAnimation();
 
-    if (!nasaApiKey) {
-      setLoading(false);
-      setFetchError("Add your NASA API key to load APOD images.");
-      return;
-    }
+    const apiKey = nasaApiKey || "DEMO_KEY";
 
     try {
-      const res = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${nasaApiKey}&date=${date}`);
+      const res = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${apiKey}&date=${date}`);
       const data = await res.json();
 
       if (!res.ok || data?.code || data?.msg) {
@@ -168,6 +198,8 @@ const HomeScreen = () => {
 
   const explanationText = apiData?.explanation || "Loading story...";
   const isImageMedia = apiData?.media_type === "image";
+  const isVideoMedia = apiData?.media_type === "video";
+  const hasPlayableMedia = isImageMedia || isVideoMedia;
   const displayDate = formatLongDate(apiData?.date || pickerDate);
   const backgroundSource = isImageMedia && apiData?.url
     ? { uri: apiData.url }
@@ -237,8 +269,12 @@ const HomeScreen = () => {
     setApiKeyModalVisible(false);
   }
 
+
+
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView edges={["left", "right"]} style={styles.container}>
+    <View style={styles.container}>
       <ImageBackground
         source={backgroundSource}
         blurRadius={28}
@@ -247,7 +283,7 @@ const HomeScreen = () => {
       >
         <LinearGradient
           colors={["rgba(6,10,20,0.52)", "rgba(7,12,23,0.86)", "rgba(5,8,14,0.97)"]}
-          style={[styles.overlay, StyleSheet.absoluteFillObject]}
+          style={[styles.overlay, StyleSheet.absoluteFillObject, { paddingTop: insets.top }]}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -262,11 +298,35 @@ const HomeScreen = () => {
               </Text>
 
               <View style={styles.controlRow}>
-                <Pressable style={styles.dateButton} onPress={() => setCalendarVisible(true)}>
-                  <Ionicons name="calendar-outline" size={18} color={COLORS.blue} />
-                  <Text style={styles.dateText}>{displayDate}</Text>
-                  <Ionicons name="chevron-down" size={16} color={COLORS.textMuted} />
-                </Pressable>
+                <View style={styles.unifiedDateControl}>
+                  <Pressable
+                    style={[styles.dateStepBtn, isMinDate && styles.dateStepDisabled]}
+                    onPress={goToPrevDay}
+                    disabled={isMinDate}
+                    accessibilityLabel="Previous day"
+                  >
+                    <Ionicons name="chevron-back" size={16} color={isMinDate ? COLORS.textMuted : COLORS.blue} />
+                  </Pressable>
+
+                  <View style={styles.dateDivider} />
+
+                  <Pressable style={styles.dateMainBtn} onPress={() => setCalendarVisible(true)}>
+                    <Ionicons name="calendar-outline" size={16} color={COLORS.blue} />
+                    <Text style={styles.dateText}>{displayDate}</Text>
+                    <Ionicons name="chevron-down" size={14} color={COLORS.textMuted} />
+                  </Pressable>
+
+                  <View style={styles.dateDivider} />
+
+                  <Pressable
+                    style={[styles.dateStepBtn, isToday && styles.dateStepDisabled]}
+                    onPress={goToNextDay}
+                    disabled={isToday}
+                    accessibilityLabel="Next day"
+                  >
+                    <Ionicons name="chevron-forward" size={16} color={isToday ? COLORS.textMuted : COLORS.blue} />
+                  </Pressable>
+                </View>
 
                 <Pressable
                   style={styles.iconButton}
@@ -311,28 +371,18 @@ const HomeScreen = () => {
 
             <Pressable
               style={styles.imageContainer}
+              disabled={!isImageMedia}
               onPress={() => {
                 if (isImageMedia && apiData?.url) {
                   setPreviewVisible(true);
                 }
               }}
             >
-              {loading && !imageLoaded && isImageMedia ? (
+              {loading && !imageLoaded && hasPlayableMedia ? (
                 <FullSkeleton width="100%" imageHeight={360} />
               ) : null}
 
-              {!nasaApiKey && !apiKeyLoading ? (
-                <View style={styles.stateCard}>
-                  <Ionicons name="key-outline" size={30} color={COLORS.accent} />
-                  <Text style={styles.stateTitle}>NASA API key needed</Text>
-                  <Text style={styles.stateSubtitle}>
-                    Add your own NASA API key to unlock APOD and date browsing on this device.
-                  </Text>
-                  <Pressable style={styles.retryButton} onPress={() => setApiKeyModalVisible(true)}>
-                    <Text style={styles.retryButtonText}>Add API Key</Text>
-                  </Pressable>
-                </View>
-              ) : fetchError ? (
+              {fetchError ? (
                 <View style={styles.stateCard}>
                   <Ionicons name="cloud-offline-outline" size={30} color={COLORS.accent} />
                   <Text style={styles.stateTitle}>Picture unavailable</Text>
@@ -381,11 +431,6 @@ const HomeScreen = () => {
                     <View style={styles.metaPill}>
                       <Text style={styles.metaPillText}>{displayDate}</Text>
                     </View>
-                    {isImageMedia && apiData?.url ? (
-                      <View style={styles.metaPill}>
-                        <Ionicons name="expand-outline" size={14} color={COLORS.textPrimary} />
-                      </View>
-                    ) : null}
                   </View>
 
                   <View style={styles.imageActions}>
@@ -422,12 +467,83 @@ const HomeScreen = () => {
                     {apiData?.title || "Loading title..."}
                   </Text>
                 </Animated.View>
+              ) : isVideoMedia && apiData?.url ? (
+                <Animated.View
+                  style={[
+                    styles.imageFill,
+                    {
+                      opacity: fadeAnim,
+                      transform: [{ translateY: translateAnim }],
+                    },
+                  ]}
+                >
+                  <WebView
+                    source={{ uri: apiData.url }}
+                    style={styles.heroVideo}
+                    javaScriptEnabled
+                    domStorageEnabled
+                    allowsFullscreenVideo
+                    onLoadEnd={startFade}
+                    onError={() => {
+                      setImageLoaded(true);
+                      setFetchError("We couldn't load this video.");
+                    }}
+                  />
+
+                  <View pointerEvents="none" style={styles.imageMetaRow}>
+                    <View style={styles.metaPill}>
+                      <Text style={styles.metaPillText}>VIDEO</Text>
+                    </View>
+                    <View style={styles.metaPill}>
+                      <Text style={styles.metaPillText}>{displayDate}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.imageActions}>
+                    <Pressable
+                      style={[styles.favoriteButton, fav && styles.favoriteButtonActive]}
+                      onPress={toggleFavorite}
+                    >
+                      <Ionicons
+                        name={fav ? "heart" : "heart-outline"}
+                        size={20}
+                        color={fav ? "#FF8A80" : COLORS.textPrimary}
+                      />
+                    </Pressable>
+                  </View>
+
+                  <View style={styles.floatingDateNav}>
+                    <Pressable
+                      style={[styles.floatingArrowBtn, isMinDate && styles.floatingArrowDisabled]}
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        goToPrevDay();
+                      }}
+                      disabled={isMinDate}
+                      accessibilityLabel="Previous day"
+                    >
+                      <Ionicons name="chevron-back" size={18} color={isMinDate ? COLORS.textMuted : COLORS.textPrimary} />
+                    </Pressable>
+
+                    <Pressable
+                      style={[styles.floatingArrowBtn, isToday && styles.floatingArrowDisabled]}
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        goToNextDay();
+                      }}
+                      disabled={isToday}
+                      accessibilityLabel="Next day"
+                    >
+                      <Ionicons name="chevron-forward" size={18} color={isToday ? COLORS.textMuted : COLORS.textPrimary} />
+                    </Pressable>
+                  </View>
+                </Animated.View>
               ) : apiData ? (
                 <View style={styles.stateCard}>
                   <Ionicons name="play-circle-outline" size={34} color={COLORS.blue} />
                   <Text style={styles.stateTitle}>{apiData.title}</Text>
                   <Text style={styles.stateSubtitle}>
-                    This APOD entry is a video or unsupported media type, so the story is shown below.
+                    This APOD entry uses an unsupported media type, so the story is shown below.
                   </Text>
                 </View>
               ) : (
@@ -489,7 +605,8 @@ const HomeScreen = () => {
         onClose={() => setApiKeyModalVisible(false)}
         onSave={handleSaveApiKey}
       />
-    </SafeAreaView>
+
+    </View>
   );
 };
 
@@ -508,7 +625,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 26,
+    paddingTop: 10,
     paddingBottom: 42,
   },
   headerBlock: {
@@ -525,8 +642,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   heroEyebrow: {
-    marginTop: 18,
+    marginTop: 4,
     color: COLORS.blue,
     fontSize: 11,
     letterSpacing: 2.1,
@@ -553,28 +671,49 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
   },
-  dateButton: {
+  unifiedDateControl: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 22,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    borderRadius: 24,
+    height: 48,
     shadowColor: COLORS.shadow,
     shadowOpacity: 0.18,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
+    overflow: "hidden",
+  },
+  dateStepBtn: {
+    width: 42,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dateStepDisabled: {
+    opacity: 0.3,
+  },
+  dateDivider: {
+    width: 1,
+    height: "46%",
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
+  dateMainBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+    paddingHorizontal: 6,
   },
   dateText: {
     color: COLORS.textPrimary,
-    fontSize: 15,
-    fontWeight: "600",
-    marginHorizontal: 8,
+    fontSize: 14,
+    fontWeight: "700",
+    marginHorizontal: 6,
   },
   imageContainer: {
     marginTop: 18,
@@ -599,6 +738,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  heroVideo: {
+    flex: 1,
+    backgroundColor: "#05080E",
+  },
   gradient: {
     position: "absolute",
     bottom: 0,
@@ -610,8 +753,27 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 16,
     left: 16,
+    right: 16,
     flexDirection: "row",
     alignItems: "center",
+  },
+  swipeHintPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.45)",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginLeft: "auto",
+  },
+  swipeHintText: {
+    color: COLORS.textMuted,
+    fontSize: 10,
+    fontWeight: "600",
+    marginLeft: 4,
+    letterSpacing: 0.5,
   },
   metaPill: {
     backgroundColor: "rgba(255,255,255,0.12)",
@@ -651,12 +813,40 @@ const styles = StyleSheet.create({
   subtitle: {
     position: "absolute",
     left: 16,
-    right: 16,
+    right: 108,
     bottom: 18,
     fontSize: 22,
     lineHeight: 28,
     color: COLORS.textPrimary,
     fontWeight: "700",
+  },
+  floatingDateNav: {
+    position: "absolute",
+    bottom: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(10, 16, 28, 0.78)",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 22,
+    padding: 3,
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  floatingArrowBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 2,
+  },
+  floatingArrowDisabled: {
+    opacity: 0.3,
   },
   stateCard: {
     minHeight: 360,
@@ -753,6 +943,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontWeight: "700",
   },
+
   credits: {
     color: COLORS.textMuted,
     fontSize: 12,

@@ -11,7 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -95,7 +95,7 @@ const getEpicFavoriteKey = (frame, mode, selectedDate) => {
   return `epic_${mode}_${selectedDate}_${frame.identifier}`;
 };
 
-const EPIC = () => {
+const EPIC = ({ navigation }) => {
   const [mode, setMode] = useState("natural");
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -337,8 +337,10 @@ const EPIC = () => {
     }
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView edges={["left", "right"]} style={styles.container}>
+    <View style={styles.container}>
       <ImageBackground
         source={heroBackground}
         blurRadius={24}
@@ -347,8 +349,18 @@ const EPIC = () => {
       >
         <LinearGradient
           colors={["rgba(5,11,18,0.5)", "rgba(5,10,17,0.84)", "rgba(4,8,13,0.97)"]}
-          style={[styles.overlay, StyleSheet.absoluteFillObject]}
+          style={[styles.overlay, StyleSheet.absoluteFillObject, { paddingTop: insets.top }]}
         >
+          {/* Header */}
+          <View style={styles.topHeader}>
+            <Pressable style={styles.backButton} onPress={() => navigation?.goBack()}>
+              <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+            </Pressable>
+            <View style={styles.titleWrap}>
+              <Text style={styles.headerEyebrow}>DSCOVR ARCHIVE</Text>
+              <Text style={styles.headerTitle}>Earth Live</Text>
+            </View>
+          </View>
           <DateTimePickerModal
             isVisible={calendarVisible}
             mode="date"
@@ -569,7 +581,7 @@ const EPIC = () => {
         onDownload={() => downloadImage(previewData.uri)}
         onShare={() => shareImage(previewData.uri)}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -585,6 +597,40 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
+  },
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  titleWrap: {
+    flex: 1,
+  },
+  headerEyebrow: {
+    color: COLORS.accent,
+    fontSize: 10,
+    letterSpacing: 2,
+    fontWeight: "700",
+  },
+  headerTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 20,
+    fontWeight: "700",
   },
   scrollContent: {
     paddingHorizontal: 16,

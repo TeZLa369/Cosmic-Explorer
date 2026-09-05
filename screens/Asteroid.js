@@ -7,14 +7,13 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useMemo, useState } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import NasaApiKeyModal from '../components/NasaApiKeyModal';
-import { loadNasaApiKey, saveNasaApiKey } from '../components/nasaApiKeyStorage';
+import { loadNasaApiKey } from '../components/nasaApiKeyStorage';
 
 const COLORS = {
   textPrimary: "#F8FAFC",
@@ -34,7 +33,7 @@ const COLORS = {
 
 const formatNumber = (value) => Number(value || 0).toLocaleString();
 
-const Asteroid = () => {
+const Asteroid = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -42,7 +41,6 @@ const Asteroid = () => {
   const [fetchError, setFetchError] = useState("");
   const [nasaApiKey, setNasaApiKey] = useState("");
   const [apiKeyLoading, setApiKeyLoading] = useState(true);
-  const [apiKeyModalVisible, setApiKeyModalVisible] = useState(false);
 
   const formatDateForAPI = (date) => {
     const year = date.getFullYear();
@@ -59,6 +57,8 @@ const Asteroid = () => {
     });
   };
 
+  const isToday = formatDateForAPI(selectedDate) === formatDateForAPI(new Date());
+
   const isAsteroidSaved = async (id) => {
     try {
       const item = await AsyncStorage.getItem("nro" + id);
@@ -74,15 +74,10 @@ const Asteroid = () => {
     setObjData([]);
 
     const dateStr = formatDateForAPI(dateObj);
-
-    if (!nasaApiKey) {
-      setLoading(false);
-      setFetchError("Add your NASA API key to load asteroid data.");
-      return;
-    }
+    const apiKey = nasaApiKey || "DEMO_KEY";
 
     try {
-      const res = await fetch(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${dateStr}&end_date=${dateStr}&api_key=${nasaApiKey}`);
+      const res = await fetch(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${dateStr}&end_date=${dateStr}&api_key=${apiKey}`);
       const data = await res.json();
 
       if (!res.ok || data?.code || data?.error_message) {
@@ -157,17 +152,6 @@ const Asteroid = () => {
     }
   }, [selectedDate, nasaApiKey, apiKeyLoading]);
 
-  const handleSaveApiKey = async (value) => {
-    const normalized = await saveNasaApiKey(value);
-    if (!normalized) {
-      Alert.alert("Invalid key", "Please enter a valid NASA API key.");
-      return;
-    }
-
-    setNasaApiKey(normalized);
-    setApiKeyModalVisible(false);
-  };
-
   const stats = useMemo(() => {
     if (objData.length === 0) {
       return {
@@ -190,22 +174,51 @@ const Asteroid = () => {
   const renderHeader = () => (
     <View style={styles.headerWrap}>
       <View style={styles.heroCard}>
-        <Text style={styles.heroEyebrow}>NEAR EARTH OBJECT FEED</Text>
+        <Text style={styles.heroEyebrow}>NEAR-EARTH OBJECT FEED</Text>
         <Text style={styles.mainTxt}>Asteroid traffic around Earth, one day at a time.</Text>
         <Text style={styles.subTxt}>
           Pick a date, scan the closest objects, and save the ones you want to revisit.
         </Text>
 
         <View style={styles.controlsRow}>
-          <Pressable style={styles.dateStyle} onPress={() => setCalendarVisible(true)}>
-            <Ionicons name="calendar-outline" size={18} color={COLORS.accent} />
-            <Text style={styles.dateText}>{getDisplayDate()}</Text>
-            <Ionicons name="chevron-down" size={16} color={COLORS.textMuted} />
-          </Pressable>
+          <View style={styles.unifiedDateBar}>
+            <Pressable
+              style={styles.dateStepBtn}
+              onPress={() => {
+                const prev = new Date(selectedDate);
+                prev.setDate(prev.getDate() - 1);
+                setSelectedDate(prev);
+              }}
+              accessibilityLabel="Previous day"
+            >
+              <Ionicons name="chevron-back" size={18} color={COLORS.accent} />
+            </Pressable>
 
-          <Pressable style={styles.keyChip} onPress={() => setApiKeyModalVisible(true)}>
-            <Ionicons name="key-outline" size={16} color={COLORS.textPrimary} />
-          </Pressable>
+            <View style={styles.dateDivider} />
+
+            <Pressable style={styles.dateMainBtn} onPress={() => setCalendarVisible(true)}>
+              <Ionicons name="calendar-outline" size={16} color={COLORS.accent} />
+              <Text style={styles.dateText}>{getDisplayDate()}</Text>
+              <Ionicons name="chevron-down" size={14} color={COLORS.textMuted} />
+            </Pressable>
+
+            <View style={styles.dateDivider} />
+
+            <Pressable
+              style={[styles.dateStepBtn, isToday && styles.dateStepDisabled]}
+              disabled={isToday}
+              onPress={() => {
+                if (!isToday) {
+                  const next = new Date(selectedDate);
+                  next.setDate(next.getDate() + 1);
+                  setSelectedDate(next);
+                }
+              }}
+              accessibilityLabel="Next day"
+            >
+              <Ionicons name="chevron-forward" size={18} color={isToday ? COLORS.textMuted : COLORS.accent} />
+            </Pressable>
+          </View>
 
           <View style={styles.countChip}>
             <Text style={styles.countChipLabel}>OBJECTS</Text>
@@ -229,12 +242,24 @@ const Asteroid = () => {
     </View>
   );
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView edges={["left", "right"]} style={styles.container}>
+    <View style={styles.container}>
       <LinearGradient
         colors={["#04070C", "#0A1323", "#050913"]}
-        style={styles.gradientBg}
+        style={[styles.gradientBg, { paddingTop: insets.top }]}
       >
+        {/* Header */}
+        <View style={styles.topHeader}>
+          <Pressable style={styles.backButton} onPress={() => navigation?.goBack()}>
+            <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+          </Pressable>
+          <View style={styles.titleWrap}>
+            <Text style={styles.headerEyebrow}>NEAR EARTH OBJECTS</Text>
+            <Text style={styles.headerTitle}>Asteroid Watch</Text>
+          </View>
+        </View>
         <DateTimePickerModal
           isVisible={calendarVisible}
           mode='date'
@@ -248,18 +273,7 @@ const Asteroid = () => {
           onCancel={() => setCalendarVisible(false)}
         />
 
-        {!nasaApiKey && !apiKeyLoading ? (
-          <View style={styles.center}>
-            <View style={styles.loaderBadge}>
-              <Ionicons name="key-outline" size={26} color={COLORS.accent} />
-            </View>
-            <Text style={styles.loaderTitle}>NASA API key needed</Text>
-            <Text style={styles.loaderSubtitle}>Add your key to unlock the asteroid feed and daily watchlist.</Text>
-            <Pressable style={styles.retryButton} onPress={() => setApiKeyModalVisible(true)}>
-              <Text style={styles.retryButtonText}>Add API Key</Text>
-            </Pressable>
-          </View>
-        ) : loading && objData.length === 0 ? (
+        {loading && objData.length === 0 ? (
           <View style={styles.center}>
             <View style={styles.loaderBadge}>
               <Ionicons name="planet-outline" size={26} color={COLORS.accent} />
@@ -355,13 +369,7 @@ const Asteroid = () => {
           />
         )}
       </LinearGradient>
-      <NasaApiKeyModal
-        visible={apiKeyModalVisible}
-        currentValue={nasaApiKey}
-        onClose={() => setApiKeyModalVisible(false)}
-        onSave={handleSaveApiKey}
-      />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -374,6 +382,40 @@ const styles = StyleSheet.create({
   },
   gradientBg: {
     flex: 1,
+  },
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  titleWrap: {
+    flex: 1,
+  },
+  headerEyebrow: {
+    color: COLORS.accent,
+    fontSize: 10,
+    letterSpacing: 2,
+    fontWeight: "700",
+  },
+  headerTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 20,
+    fontWeight: "700",
   },
   listContent: {
     paddingHorizontal: 16,
@@ -419,53 +461,58 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  dateStyle: {
+  unifiedDateBar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 24,
+    height: 48,
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+    overflow: "hidden",
+  },
+  dateStepBtn: {
+    width: 44,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dateStepDisabled: {
+    opacity: 0.3,
+  },
+  dateDivider: {
+    width: 1,
+    height: "46%",
+    backgroundColor: "rgba(255,255,255,0.16)",
+  },
+  dateMainBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.surfaceSoft,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
-  },
-  keyChip: {
-    width: 46,
-    height: 46,
-    marginLeft: 10,
-    borderRadius: 23,
-    backgroundColor: COLORS.surfaceSoft,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
+    height: "100%",
+    paddingHorizontal: 8,
   },
   dateText: {
-    fontSize: 15,
+    fontSize: 14,
     color: COLORS.textPrimary,
     fontWeight: "700",
-    marginHorizontal: 8,
+    marginHorizontal: 6,
   },
   countChip: {
-    width: 92,
-    marginLeft: 10,
+    width: 82,
+    marginLeft: 8,
     backgroundColor: COLORS.surfaceSoft,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 20,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: "center",
     shadowColor: COLORS.shadow,
     shadowOpacity: 0.14,
@@ -475,12 +522,12 @@ const styles = StyleSheet.create({
   },
   countChipLabel: {
     color: COLORS.textMuted,
-    fontSize: 10,
+    fontSize: 9,
     letterSpacing: 1.2,
   },
   countChipValue: {
     color: COLORS.textPrimary,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "700",
     marginTop: 2,
   },

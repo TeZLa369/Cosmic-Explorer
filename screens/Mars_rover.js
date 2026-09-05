@@ -2,7 +2,7 @@ import { Feather, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState, memo } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system/legacy";
@@ -151,7 +151,7 @@ const RoverCard = memo(({ item, saveImage, shareImage, onPreview, screenHeight, 
   );
 });
 
-const Mars_rover = () => {
+const Mars_rover = ({ navigation }) => {
   const [apiData, setapiData] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [pageNo, setpageNo] = useState(0);
@@ -268,10 +268,17 @@ const Mars_rover = () => {
     ? marsData[activeIndex].image
     : null;
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
+    <View style={styles.container}>
       {marsData.length === 0 ? (
-        <View style={styles.loaderContainer}>
+        <View style={[styles.loaderContainer, { paddingTop: insets.top }]}>
+          <View style={styles.topHeaderLoading}>
+            <Pressable style={styles.backButton} onPress={() => navigation?.goBack()}>
+              <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+            </Pressable>
+          </View>
           <View style={styles.loaderBadge}>
             <Ionicons name="rocket-outline" size={24} color={COLORS.accent} />
           </View>
@@ -295,8 +302,18 @@ const Mars_rover = () => {
           style={styles.imgBackground}>
           <LinearGradient
             colors={["rgba(11,7,5,0.5)", "rgba(18,10,7,0.86)", "rgba(8,5,4,0.96)"]}
-            style={[styles.overlay, StyleSheet.absoluteFillObject]}
+            style={[styles.overlay, StyleSheet.absoluteFillObject, { paddingTop: insets.top }]}
           >
+            {/* Header */}
+            <View style={styles.topHeader}>
+              <Pressable style={styles.backButton} onPress={() => navigation?.goBack()}>
+                <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+              </Pressable>
+              <View style={styles.titleWrap}>
+                <Text style={styles.headerEyebrow}>MARS 2020</Text>
+                <Text style={styles.headerTitle}>Mars Rover</Text>
+              </View>
+            </View>
             <FlatList
               data={marsData}
               renderItem={({ item, index }) => (
@@ -339,7 +356,7 @@ const Mars_rover = () => {
         onDownload={() => saveImage(previewData.uri)}
         onShare={() => shareImage(previewData.uri)}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -349,6 +366,46 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#090504",
     flex: 1,
+  },
+  topHeaderLoading: {
+    position: "absolute",
+    top: 14,
+    left: 16,
+    zIndex: 10,
+  },
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  titleWrap: {
+    flex: 1,
+  },
+  headerEyebrow: {
+    color: COLORS.accent,
+    fontSize: 10,
+    letterSpacing: 2,
+    fontWeight: "700",
+  },
+  headerTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 20,
+    fontWeight: "700",
   },
   loaderContainer: {
     flex: 1,

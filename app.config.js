@@ -16,6 +16,9 @@ export default {
             package: "com.kuntal.cosmicexplorer",
             versionCode: 1,
             permissions: [
+                "CAMERA",
+                "ACCESS_FINE_LOCATION",
+                "ACCESS_COARSE_LOCATION",
                 "READ_MEDIA_IMAGES",
                 "WRITE_EXTERNAL_STORAGE",
                 "READ_EXTERNAL_STORAGE"
